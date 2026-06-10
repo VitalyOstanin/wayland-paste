@@ -87,6 +87,18 @@ const ShortcutRow = GObject.registerClass(
       const accel = accels.length ? accels[0] : "";
       this._shortcutLabel.set_accelerator(accel);
       this._clearButton.set_sensitive(accel !== "");
+      // Also spell out the current binding in the subtitle: the ShortcutLabel
+      // suffix is easy to miss, so the text makes the active shortcut explicit.
+      if (!this._listening) this.set_subtitle(this._subtitleFor(accel));
+    }
+
+    // Subtitle shown when not capturing: the base instruction, plus the current
+    // shortcut in human-readable form (e.g. "Shift+Alt+V") when one is set.
+    _subtitleFor(accel) {
+      if (!accel) return this._baseSubtitle;
+      const [ok, key, mods] = Gtk.accelerator_parse(accel);
+      const human = ok ? Gtk.accelerator_get_label(key, mods) : accel;
+      return `Current: ${human} — ${this._baseSubtitle}`;
     }
 
     _store(accel) {
@@ -116,7 +128,8 @@ const ShortcutRow = GObject.registerClass(
       this._listening = false;
       if (ShortcutRow._listener === this) ShortcutRow._listener = null;
       this.remove_css_class("accent");
-      this.set_subtitle(this._baseSubtitle);
+      // Restore the subtitle, including the current binding.
+      this._syncFromSettings();
     }
 
     _onKeyPressed(_controller, keyval, keycode, state) {

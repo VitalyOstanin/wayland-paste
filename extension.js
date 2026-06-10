@@ -54,6 +54,7 @@ export default class WaylandPasteExtension extends Extension {
       onClear: () => this._onClear(),
       onOpen: () => this._onMenuOpen(),
       onClose: () => this._onMenuClosed(),
+      onSettings: () => this.openPreferences(),
     });
     Main.panel.addToStatusArea(this.uuid, this._indicator);
     this._applyIndicatorVisibility();
@@ -139,7 +140,24 @@ export default class WaylandPasteExtension extends Extension {
   _onMenuClosed() {
     const pending = this._pendingTarget;
     this._pendingTarget = undefined;
-    if (pending === undefined) return; // closed without activating, or no instant paste
+
+    if (pending === undefined) {
+      // Closed without pasting (Escape, click-away). The search entry held the
+      // keyboard focus on the shell stage. Returning it from this handler does
+      // not work: open-state-changed is emitted synchronously inside
+      // PopupMenu.close(), and PopupMenuManager pops the modal grab (and restores
+      // focus) from its own handler of the same signal — running in the same
+      // emission, it overrides our change. One main-loop tick is enough to run
+      // after that emission completes, so an idle callback (not a fixed delay) is
+      // the minimal correct wait.
+      if (this._pasteDelayId) GLib.source_remove(this._pasteDelayId);
+      this._pasteDelayId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+        this._pasteDelayId = 0;
+        this._focusTarget(this._target);
+        return GLib.SOURCE_REMOVE;
+      });
+      return;
+    }
 
     // Wait for the modal grab to release, then return focus and paste.
     if (this._pasteDelayId) GLib.source_remove(this._pasteDelayId);
@@ -154,12 +172,12 @@ export default class WaylandPasteExtension extends Extension {
     );
   }
 
-  // Return keyboard focus to the target window, then inject the paste once focus
-  // has settled. The menu grab does not change the Meta focus window, so the
-  // target is usually already focused and clearing the stage key focus is enough;
-  // re-activating an already-focused window forces a focus-out/in cycle that some
-  // apps treat as a swallowed keypress, so we only activate if focus differs.
-  _focusAndInject(target) {
+  // Return keyboard focus to the target window. The menu grab does not change the
+  // Meta focus window, so the target is usually already focused and clearing the
+  // stage key focus is enough; re-activating an already-focused window forces a
+  // focus-out/in cycle that some apps treat as a swallowed keypress, so we only
+  // activate if focus differs.
+  _focusTarget(target) {
     global.stage.set_key_focus(null);
     if (target && target !== global.display.focus_window) {
       try {
@@ -168,6 +186,11 @@ export default class WaylandPasteExtension extends Extension {
         logError(err, "[wayland-paste] failed to activate paste target");
       }
     }
+  }
+
+  // Return focus to the target window, then inject the paste once focus settles.
+  _focusAndInject(target) {
+    this._focusTarget(target);
 
     if (this._injectDelayId) GLib.source_remove(this._injectDelayId);
     this._injectDelayId = GLib.timeout_add(
