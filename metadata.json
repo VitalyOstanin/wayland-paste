@@ -1,0 +1,10 @@
+{
+  "uuid": "wayland-paste@VitalyOstanin",
+  "name": "Wayland Paste",
+  "description": "A clipboard history manager for GNOME Shell on Wayland, providing the same workflow as Diodon: it keeps a searchable history of recent clipboard (and primary-selection) entries, shown from a mouse-driven top-bar menu with type-to-filter search. Selecting an entry copies it back to the clipboard and, with instant paste enabled, types Ctrl+V into the previously focused window using GNOME Shell's in-process virtual input device, so no Remote Desktop permission dialog appears. Per-application paste shortcuts (for example Shift+Ctrl+V in terminals), a content filter, image entries, and clipboard/primary synchronization mirror Diodon's settings. Works on GNOME 45-50.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "settings-schema": "org.gnome.shell.extensions.wayland-paste",
+  "gettext-domain": "wayland-paste",
+  "url": "https://github.com/VitalyOstanin/wayland-paste",
+  "version-name": "1.0"
+}

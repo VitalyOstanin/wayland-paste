@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+/* The search entry sits above the scrollable list of history entries. */
+.wayland-paste-search {
+  margin: 6px 8px;
+}
+
+/* Cap the height of the history list so a long history scrolls instead of
+   growing the menu past the screen. */
+.wayland-paste-scroll {
+  max-height: 24em;
+}
+
+/* Image entries show a small thumbnail next to a label. */
+.wayland-paste-thumbnail {
+  width: 64px;
+  height: 48px;
+  border-radius: 4px;
+}
+
+/* The empty-history placeholder. */
+.wayland-paste-empty {
+  padding: 8px 12px;
+}

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.wayland-paste"
+          path="/org/gnome/shell/extensions/wayland-paste/">
+
+    <!-- History ============================================================ -->
+
+    <key name="history-size" type="i">
+      <default>25</default>
+      <range min="1" max="500"/>
+      <summary>Number of clipboard entries to keep</summary>
+      <description>
+        Maximum number of recent clipboard entries kept in the history.
+        Mirrors Diodon's recent-items-size.
+      </description>
+    </key>
+
+    <key name="use-clipboard" type="b">
+      <default>true</default>
+      <summary>Track the CLIPBOARD selection</summary>
+      <description>
+        Watch the regular clipboard (Ctrl+C / Ctrl+X) and record its content.
+      </description>
+    </key>
+
+    <key name="use-primary" type="b">
+      <default>true</default>
+      <summary>Track the PRIMARY selection</summary>
+      <description>
+        Watch the primary selection (text highlighted with the mouse) and record
+        its content. Mirrors Diodon's use-primary.
+      </description>
+    </key>
+
+    <key name="synchronize-clipboards" type="b">
+      <default>false</default>
+      <summary>Keep CLIPBOARD and PRIMARY in sync</summary>
+      <description>
+        When either selection changes, copy its content into the other so both
+        hold the same value. Mirrors Diodon's synchronize-clipboards.
+      </description>
+    </key>
+
+    <key name="keep-clipboard-content" type="b">
+      <default>true</default>
+      <summary>Persist history across sessions</summary>
+      <description>
+        Save the history to disk and restore it on the next login, and re-own the
+        last entry so it survives the application that produced it closing.
+        Mirrors Diodon's keep-clipboard-content.
+      </description>
+    </key>
+
+    <key name="add-images" type="b">
+      <default>false</default>
+      <summary>Store image entries</summary>
+      <description>
+        Also record images copied to the clipboard, not only text. Mirrors
+        Diodon's add-images. Off by default because images are larger.
+      </description>
+    </key>
+
+    <key name="filter-pattern" type="s">
+      <default>'^\s+$'</default>
+      <summary>Ignore content matching this regular expression</summary>
+      <description>
+        JavaScript regular expression; clipboard text matching it is not added to
+        the history. The default ignores whitespace-only content. Mirrors
+        Diodon's filter-pattern.
+      </description>
+    </key>
+
+    <!-- Pasting ============================================================ -->
+
+    <key name="instant-paste" type="b">
+      <default>true</default>
+      <summary>Paste immediately on selection</summary>
+      <description>
+        After an entry is chosen it is copied to the clipboard and Ctrl+V is typed
+        into the previously focused window through GNOME Shell's in-process
+        virtual input device, so no Remote Desktop dialog appears. When off, the
+        entry is only copied and you paste manually. Mirrors Diodon's
+        instant-paste.
+      </description>
+    </key>
+
+    <key name="default-paste-keybinding" type="s">
+      <default>'&lt;Ctrl&gt;v'</default>
+      <summary>Default paste shortcut to inject</summary>
+      <description>
+        Accelerator typed for instant paste in applications without a specific
+        entry in paste-keybindings. Standard paste is Ctrl+V.
+      </description>
+    </key>
+
+    <key name="paste-keybindings" type="as">
+      <default>[
+        'org.gnome.Terminal|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'gnome-terminal-server|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'org.gnome.Console|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'org.gnome.Ptyxis|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'Alacritty|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'kitty|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'xfce4-terminal|&lt;Shift&gt;&lt;Ctrl&gt;v',
+        'foot|&lt;Shift&gt;&lt;Ctrl&gt;v'
+      ]</default>
+      <summary>Per-application paste shortcuts</summary>
+      <description>
+        Each entry is "WM_CLASS|accelerator". When instant paste targets a window
+        whose WM_CLASS matches, the given accelerator is typed instead of the
+        default one. Used for terminals, which paste with Shift+Ctrl+V. Mirrors
+        Diodon's app-paste-keybindings.
+      </description>
+    </key>
+
+    <!-- Interface ========================================================== -->
+
+    <key name="show-indicator" type="b">
+      <default>true</default>
+      <summary>Show the panel indicator</summary>
+      <description>
+        Show the clipboard icon in the top bar. The history is also reachable via
+        the toggle-menu shortcut.
+      </description>
+    </key>
+
+    <key name="toggle-menu" type="as">
+      <default>['&lt;Super&gt;v']</default>
+      <summary>Shortcut to open the history menu</summary>
+      <description>
+        Keyboard shortcut that opens the clipboard history menu and focuses the
+        search entry.
+      </description>
+    </key>
+
+    <key name="poll-interval-ms" type="i">
+      <default>500</default>
+      <range min="100" max="5000"/>
+      <summary>Clipboard poll interval in milliseconds</summary>
+      <description>
+        Wayland does not notify extensions of clipboard changes, so the clipboard
+        is polled on this interval. Lower values capture changes sooner at a small
+        CPU cost. This setting has no equivalent in Diodon, which runs on X11.
+      </description>
+    </key>
+
+  </schema>
+</schemalist>
