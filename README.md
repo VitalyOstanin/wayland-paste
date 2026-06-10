@@ -2,9 +2,11 @@
 
 A clipboard history manager for GNOME Shell on Wayland. It provides the same
 workflow as [Diodon](https://github.com/diodon-dev/diodon) — a searchable history
-of recent clipboard entries with paste-on-selection — but implemented as a GNOME
-Shell extension so it works on Wayland without the Remote Desktop permission
-dialog.
+of recent clipboard entries with paste-on-selection. Diodon itself works fine on
+Wayland; the difference is that its auto-paste goes through the Remote Desktop
+portal (a permission grant and a persistent screen-sharing indicator), whereas
+this is a GNOME Shell extension that pastes in-process, with no portal and no
+indicator.
 
 ## Table of Contents
 
@@ -20,15 +22,18 @@ dialog.
 
 ## Why this exists
 
-Diodon is an X11 application. On a GNOME Wayland session its "paste on selection"
-feature synthesizes Ctrl+V through XWayland's XTest, which GNOME routes through
-the Remote Desktop portal. The result is a permission dialog and a persistent
-orange screen-sharing indicator in the top bar every time you paste.
+This is not a fix for a broken feature: [Diodon](https://github.com/diodon-dev/diodon)
+is fully functional on a GNOME Wayland session. The only friction is how its
+automatic paste is delivered. Diodon is an X11 application, and on Wayland its
+"paste on selection" synthesizes Ctrl+V through a path that GNOME routes via the
+Remote Desktop portal — which means a permission grant and a persistent orange
+screen-sharing indicator in the top bar while it is active. Not wanting to deal
+with that portal machinery is the entire reason this extension exists.
 
 A GNOME Shell extension runs inside the compositor and can synthesize input
 through the same in-process virtual device the on-screen keyboard uses. That path
-involves no portal and no dialog. Wayland Paste reproduces Diodon's behaviour over
-that path.
+involves no portal, no dialog and no indicator. Wayland Paste reproduces Diodon's
+behaviour over that path.
 
 ## What it does
 
