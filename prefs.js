@@ -10,6 +10,10 @@ import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/
 // Minimum visible height (px) of the per-app paste-keybindings editor.
 const PER_APP_EDITOR_MIN_HEIGHT = 140;
 
+// Lower bound on the poll interval (ms). Must match the gschema range and the
+// MIN_POLL_INTERVAL_MS floor in lib/clipboardMonitor.js.
+const MIN_POLL_INTERVAL_MS = 100;
+
 // An Adw.ActionRow that captures a single keyboard shortcut interactively, like
 // the picker in GNOME Settings. Built programmatically (no .ui template) to match
 // the rest of these prefs. The pattern (capture-phase key controller, GNOME
@@ -382,7 +386,7 @@ export default class WaylandPastePrefs extends ExtensionPreferences {
 
     group.add(
       this._spinRow(settings, "poll-interval-ms", "Poll interval (ms)", {
-        lower: 100,
+        lower: MIN_POLL_INTERVAL_MS,
         upper: 5000,
         step: 50,
         subtitle: "How often the clipboard is checked (Wayland has no change signal)",

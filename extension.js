@@ -121,12 +121,19 @@ export default class WaylandPasteExtension extends Extension {
 
   _onActivate(entry) {
     // Put the chosen entry back on the clipboard and promote it in the history.
-    if (entry.type === "text") {
-      this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry.text);
-      this._monitor?.markSeen(St.ClipboardType.CLIPBOARD, entry.text);
-      this._store.addText(entry.text, this._settings.get_int("history-size"));
-    } else if (entry.type === "image") {
-      this._setImageClipboard(entry);
+    // If the clipboard write itself fails, do not arm a paste: it would type the
+    // wrong (stale) content, and the history/clipboard would be out of sync.
+    try {
+      if (entry.type === "text") {
+        this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry.text);
+        this._monitor?.markSeen(St.ClipboardType.CLIPBOARD, entry.text);
+        this._store.addText(entry.text, this._settings.get_int("history-size"));
+      } else if (entry.type === "image") {
+        this._setImageClipboard(entry);
+      }
+    } catch (err) {
+      logError(err, "[wayland-paste] failed to set clipboard for paste");
+      return;
     }
 
     // Arm a paste for when the menu finishes closing, if instant paste is on.
@@ -238,6 +245,13 @@ export default class WaylandPasteExtension extends Extension {
         St.ClipboardType.CLIPBOARD,
         entry.mimetype,
         bytes,
+      );
+      // Mark our own write as seen so the next poll does not re-record it (the
+      // text branch does the same via markSeen).
+      this._monitor?.markSeenImage(
+        St.ClipboardType.CLIPBOARD,
+        entry.mimetype,
+        contents,
       );
       this._store.addImage(
         contents,
