@@ -243,6 +243,10 @@ export default class WaylandPasteExtension extends Extension {
       const [contents] = await Gio.File.new_for_path(
         entry.file,
       ).load_contents_async(null);
+      // The await above yields to the main loop; the extension may have been
+      // disabled in the meantime (disable() nulls these fields). Abort rather
+      // than touching destroyed objects.
+      if (!this._clipboard || !this._store) return;
       this._clipboard.set_content(
         St.ClipboardType.CLIPBOARD,
         entry.mimetype,
