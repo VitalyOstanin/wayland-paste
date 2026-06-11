@@ -70,16 +70,17 @@ export default class WaylandPasteExtension extends Extension {
 
     this._bindShortcut();
 
-    this._settingsChangedId = this._settings.connect("changed", (_s, key) =>
-      this._onSettingChanged(key),
+    // Tracked with connectObject owned by `this`; disable() drops it with a
+    // single disconnectObject(this), no signal-id bookkeeping needed.
+    this._settings.connectObject(
+      "changed",
+      (_s, key) => this._onSettingChanged(key),
+      this,
     );
   }
 
   disable() {
-    if (this._settingsChangedId) {
-      this._settings.disconnect(this._settingsChangedId);
-      this._settingsChangedId = 0;
-    }
+    this._settings?.disconnectObject(this);
 
     this._unbindShortcut();
 
