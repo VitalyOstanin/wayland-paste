@@ -39,8 +39,10 @@ export default class WaylandPasteExtension extends Extension {
       "wayland-paste",
     ]);
     this._store = new HistoryStore(dataDir);
+    // load() reads history.json asynchronously; refresh the menu once it
+    // resolves (the indicator is created below, before the async load returns).
     if (this._settings.get_boolean("keep-clipboard-content"))
-      this._store.load();
+      this._store.load().then(() => this._indicator?.refresh());
 
     this._paster = new Paster();
 
@@ -225,26 +227,19 @@ export default class WaylandPasteExtension extends Extension {
     this._paster.injectAccelerator(accel);
   }
 
-  _setImageClipboard(entry) {
+  async _setImageClipboard(entry) {
     // Read the backing file asynchronously so the Shell main loop is not blocked
-    // on disk I/O; the clipboard is set in the completion callback. The 120 ms
-    // paste delay gives this ample headroom to finish before the keys are sent.
-    const file = Gio.File.new_for_path(entry.file);
-    file.load_contents_async(null, (obj, res) => {
-      let contents;
-      try {
-        const [ok, data] = obj.load_contents_finish(res);
-        if (!ok) return;
-        contents = data;
-      } catch (err) {
-        logError(err, "[wayland-paste] failed to read image entry for paste");
-        return;
-      }
-      const bytes = GLib.Bytes.new(contents);
+    // on disk I/O; the clipboard is set once it resolves. The 120 ms paste delay
+    // gives this ample headroom to finish before the keys are sent. The whole
+    // body is guarded so this fire-and-forget call never rejects.
+    try {
+      const [contents] = await Gio.File.new_for_path(
+        entry.file,
+      ).load_contents_async(null);
       this._clipboard.set_content(
         St.ClipboardType.CLIPBOARD,
         entry.mimetype,
-        bytes,
+        GLib.Bytes.new(contents),
       );
       // Mark our own write as seen so the next poll does not re-record it (the
       // text branch does the same via markSeen).
@@ -258,7 +253,9 @@ export default class WaylandPasteExtension extends Extension {
         entry.mimetype,
         this._settings.get_int("history-size"),
       );
-    });
+    } catch (err) {
+      logError(err, "[wayland-paste] failed to set image clipboard for paste");
+    }
   }
 
   _onClear() {
