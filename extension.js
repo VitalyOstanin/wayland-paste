@@ -41,8 +41,15 @@ export default class WaylandPasteExtension extends Extension {
     this._store = new HistoryStore(dataDir);
     // load() reads history.json asynchronously; refresh the menu once it
     // resolves (the indicator is created below, before the async load returns).
+    // The trailing .catch guards against a throw from refresh() (load() itself
+    // never rejects) so it does not escape as an unhandled promise rejection.
     if (this._settings.get_boolean("keep-clipboard-content"))
-      this._store.load().then(() => this._indicator?.refresh());
+      this._store
+        .load(this._settings.get_int("history-size"))
+        .then(() => this._indicator?.refresh())
+        .catch((err) =>
+          logError(err, "[wayland-paste] failed to refresh after history load"),
+        );
 
     this._paster = new Paster();
 
