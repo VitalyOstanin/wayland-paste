@@ -21,12 +21,9 @@ function check(name, cond, extra) {
 }
 
 const texts = (s) => s.entries.map((e) => e.text);
-// Уникальный фиктивный каталог на тест: HistoryStore не создаёт его, пока не
-// вызван save/load, поэтому путь может не существовать.
+// Уникальный фиктивный каталог на тест; HistoryStore не создаёт его до save/load.
 let n = 0;
 const store = () => new HistoryStore(`/tmp/wp-test-store-${n++}`);
-
-// --- дедупликация --------------------------------------------------------
 
 {
   const s = store();
@@ -36,8 +33,6 @@ const store = () => new HistoryStore(`/tmp/wp-test-store-${n++}`);
   check("dedup: длина 2 после a,b,a", s.entries.length === 2, JSON.stringify(texts(s)));
   check("dedup: повтор поднят в начало, порядок [a,b]", JSON.stringify(texts(s)) === '["a","b"]', JSON.stringify(texts(s)));
 }
-
-// --- вытеснение при заполнении ------------------------------------------
 
 {
   const s = store();
@@ -63,8 +58,6 @@ const store = () => new HistoryStore(`/tmp/wp-test-store-${n++}`);
   check("dedup-full: длина 3", s.entries.length === max, "len=" + s.entries.length);
   check("dedup-full: поднята без потерь, [a,c,b]", JSON.stringify(texts(s)) === '["a","c","b"]', JSON.stringify(texts(s)));
 }
-
-// --- дедупликация на загрузке (_parse) ----------------------------------
 
 {
   // Гонка load()/поллинг: монитор записал свежий "test" во время async-загрузки,
@@ -100,8 +93,6 @@ const store = () => new HistoryStore(`/tmp/wp-test-store-${n++}`);
   s._parse(new TextEncoder().encode(payload));
   check("file-dedup: [a,b]", JSON.stringify(texts(s)) === '["a","b"]', JSON.stringify(texts(s)));
 }
-
-// --- итог ----------------------------------------------------------------
 
 print(`\n${total - failures}/${total} passed`);
 print(failures === 0 ? "ALL PASSED" : `${failures} FAILED`);

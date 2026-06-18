@@ -14,12 +14,8 @@ import { ClipboardMonitor } from "./lib/clipboardMonitor.js";
 import { Paster } from "./lib/paster.js";
 import { ClipboardIndicator } from "./lib/indicator.js";
 
-// Timing of the paste after the menu closes. The menu is driven by mouse only
-// (like an on-screen keyboard): the user clicks an entry, the menu closes, and we
-// return keyboard focus to the target window before injecting the paste keys.
-//
-// PASTE_DELAY_MS     — wait for the modal grab to release before returning focus.
-// ACTIVATE_SETTLE_MS — after returning focus, wait for it to land before typing.
+// PASTE_DELAY_MS: wait for the modal grab to release before returning focus.
+// ACTIVATE_SETTLE_MS: after returning focus, wait for it to land before typing.
 const PASTE_DELAY_MS = 120;
 const ACTIVATE_SETTLE_MS = 80;
 
@@ -32,17 +28,15 @@ export default class WaylandPasteExtension extends Extension {
     this._pasteDelayId = 0;
     this._injectDelayId = 0;
     this._pendingTarget = undefined; // set on activate, consumed on menu close
-    this._target = null; // focus window captured when the menu opens
+    this._target = null;
 
     const dataDir = GLib.build_filenamev([
       GLib.get_user_data_dir(),
       "wayland-paste",
     ]);
     this._store = new HistoryStore(dataDir);
-    // load() reads history.json asynchronously; refresh the menu once it
-    // resolves (the indicator is created below, before the async load returns).
-    // The trailing .catch guards against a throw from refresh() (load() itself
-    // never rejects) so it does not escape as an unhandled promise rejection.
+    // load() is async; refresh the menu once it resolves. The .catch guards a
+    // throw from refresh() so it does not escape as an unhandled rejection.
     if (this._settings.get_boolean("keep-clipboard-content"))
       this._store
         .load(this._settings.get_int("history-size"))
@@ -70,8 +64,7 @@ export default class WaylandPasteExtension extends Extension {
 
     this._bindShortcut();
 
-    // Tracked with connectObject owned by `this`; disable() drops it with a
-    // single disconnectObject(this), no signal-id bookkeeping needed.
+    // connectObject owned by `this`; disable() drops it with disconnectObject(this).
     this._settings.connectObject(
       "changed",
       (_s, key) => this._onSettingChanged(key),
@@ -120,19 +113,15 @@ export default class WaylandPasteExtension extends Extension {
     this._target = null;
   }
 
-  // --- menu / paste flow ---------------------------------------------------
-
   _onMenuOpen() {
-    // Remember the window that had focus before the menu grabbed input. The
-    // modal grab does not change the Meta focus window, so this is the real
-    // paste target.
+    // The modal grab does not change the Meta focus window, so this captures
+    // the real paste target.
     this._target = global.display.focus_window ?? null;
   }
 
   _onActivate(entry) {
-    // Put the chosen entry back on the clipboard and promote it in the history.
-    // If the clipboard write itself fails, do not arm a paste: it would type the
-    // wrong (stale) content, and the history/clipboard would be out of sync.
+    // If the clipboard write fails, do not arm a paste: it would type stale
+    // content and leave history and clipboard out of sync.
     try {
       if (entry.type === "text") {
         this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry.text);
@@ -146,12 +135,10 @@ export default class WaylandPasteExtension extends Extension {
       return;
     }
 
-    // Arm a paste for when the menu finishes closing, if instant paste is on.
     this._pendingTarget = this._settings.get_boolean("instant-paste")
       ? (this._target ?? null)
       : undefined;
-    // The activated PopupMenuItem closes the menu, which triggers
-    // _onMenuClosed() where the paste is scheduled.
+    // Activating the item closes the menu; _onMenuClosed() schedules the paste.
   }
 
   _onMenuClosed() {
@@ -159,14 +146,10 @@ export default class WaylandPasteExtension extends Extension {
     this._pendingTarget = undefined;
 
     if (pending === undefined) {
-      // Closed without pasting (Escape, click-away). The search entry held the
-      // keyboard focus on the shell stage. Returning it from this handler does
-      // not work: open-state-changed is emitted synchronously inside
-      // PopupMenu.close(), and PopupMenuManager pops the modal grab (and restores
-      // focus) from its own handler of the same signal — running in the same
-      // emission, it overrides our change. One main-loop tick is enough to run
-      // after that emission completes, so an idle callback (not a fixed delay) is
-      // the minimal correct wait.
+      // Closed without pasting (Escape, click-away). open-state-changed fires
+      // synchronously inside PopupMenu.close(), where PopupMenuManager restores
+      // focus from its own handler of the same signal and would override a focus
+      // change made here; an idle callback runs after that emission completes.
       if (this._pasteDelayId) GLib.source_remove(this._pasteDelayId);
       this._pasteDelayId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
         this._pasteDelayId = 0;
@@ -189,11 +172,9 @@ export default class WaylandPasteExtension extends Extension {
     );
   }
 
-  // Return keyboard focus to the target window. The menu grab does not change the
-  // Meta focus window, so the target is usually already focused and clearing the
-  // stage key focus is enough; re-activating an already-focused window forces a
-  // focus-out/in cycle that some apps treat as a swallowed keypress, so we only
-  // activate if focus differs.
+  // Return keyboard focus to the target window. Re-activating an already-focused
+  // window forces a focus-out/in cycle that some apps treat as a swallowed
+  // keypress, so only activate if focus differs.
   _focusTarget(target) {
     global.stage.set_key_focus(null);
     if (target && target !== global.display.focus_window) {
@@ -205,7 +186,6 @@ export default class WaylandPasteExtension extends Extension {
     }
   }
 
-  // Return focus to the target window, then inject the paste once focus settles.
   _focusAndInject(target) {
     this._focusTarget(target);
 
@@ -236,25 +216,20 @@ export default class WaylandPasteExtension extends Extension {
   }
 
   async _setImageClipboard(entry) {
-    // Read the backing file asynchronously so the Shell main loop is not blocked
-    // on disk I/O; the clipboard is set once it resolves. The 120 ms paste delay
-    // gives this ample headroom to finish before the keys are sent. The whole
-    // body is guarded so this fire-and-forget call never rejects.
+    // Async read so the main loop is not blocked on disk I/O; the body is
+    // guarded so this fire-and-forget call never rejects.
     try {
       const [contents] = await Gio.File.new_for_path(
         entry.file,
       ).load_contents_async(null);
-      // The await above yields to the main loop; the extension may have been
-      // disabled in the meantime (disable() nulls these fields). Abort rather
-      // than touching destroyed objects.
+      // The await yielded; disable() may have nulled these fields meanwhile.
       if (!this._clipboard || !this._store) return;
       this._clipboard.set_content(
         St.ClipboardType.CLIPBOARD,
         entry.mimetype,
         GLib.Bytes.new(contents),
       );
-      // Mark our own write as seen so the next poll does not re-record it (the
-      // text branch does the same via markSeen).
+      // Mark our own write as seen so the next poll does not re-record it.
       this._monitor?.markSeenImage(
         St.ClipboardType.CLIPBOARD,
         entry.mimetype,
@@ -276,8 +251,6 @@ export default class WaylandPasteExtension extends Extension {
       this._store.saveAsync();
     this._indicator?.refresh();
   }
-
-  // --- settings ------------------------------------------------------------
 
   _onSettingChanged(key) {
     switch (key) {
@@ -302,8 +275,6 @@ export default class WaylandPasteExtension extends Extension {
     const show = this._settings.get_boolean("show-indicator");
     if (this._indicator?.container) this._indicator.container.visible = show;
   }
-
-  // --- shortcut ------------------------------------------------------------
 
   _bindShortcut() {
     Main.wm.addKeybinding(

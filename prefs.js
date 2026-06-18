@@ -14,10 +14,7 @@ const PER_APP_EDITOR_MIN_HEIGHT = 140;
 // MIN_POLL_INTERVAL_MS floor in lib/clipboardMonitor.js.
 const MIN_POLL_INTERVAL_MS = 100;
 
-// An Adw.ActionRow that captures a single keyboard shortcut interactively, like
-// the picker in GNOME Settings. Built programmatically (no .ui template) to match
-// the rest of these prefs. The pattern (capture-phase key controller, GNOME
-// Settings validation rules) follows the author's mute-all-mics extension; the
+// An Adw.ActionRow that captures a single keyboard shortcut interactively. The
 // validation rules originate from the night-theme-switcher extension:
 // https://gitlab.com/rmnvgr/nightthemeswitcher-gnome-shell-extension
 const ShortcutRow = GObject.registerClass(
@@ -54,8 +51,8 @@ const ShortcutRow = GObject.registerClass(
       this.set_activatable(true);
       this.connect("activated", () => this._toggleListening());
 
-      // The key controller lives on the window root and runs in the capture
-      // phase so it sees the combination before focused widgets consume it.
+      // Capture-phase controller on the window root so it sees the combination
+      // before focused widgets consume it.
       this._keyController = new Gtk.EventControllerKey();
       this._keyController.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
       this._keyController.connect("key-pressed", this._onKeyPressed.bind(this));
@@ -91,13 +88,9 @@ const ShortcutRow = GObject.registerClass(
       const accel = accels.length ? accels[0] : "";
       this._shortcutLabel.set_accelerator(accel);
       this._clearButton.set_sensitive(accel !== "");
-      // Also spell out the current binding in the subtitle: the ShortcutLabel
-      // suffix is easy to miss, so the text makes the active shortcut explicit.
       if (!this._listening) this.set_subtitle(this._subtitleFor(accel));
     }
 
-    // Subtitle shown when not capturing: the base instruction, plus the current
-    // shortcut in human-readable form (e.g. "Shift+Alt+V") when one is set.
     _subtitleFor(accel) {
       if (!accel) return this._baseSubtitle;
       const [ok, key, mods] = Gtk.accelerator_parse(accel);
@@ -107,7 +100,6 @@ const ShortcutRow = GObject.registerClass(
 
     _store(accel) {
       this._settings.set_strv(this._key, accel ? [accel] : []);
-      // _syncFromSettings runs via the changed:: handler.
     }
 
     _toggleListening() {
@@ -132,7 +124,6 @@ const ShortcutRow = GObject.registerClass(
       this._listening = false;
       if (ShortcutRow._listener === this) ShortcutRow._listener = null;
       this.remove_css_class("accent");
-      // Restore the subtitle, including the current binding.
       this._syncFromSettings();
     }
 
@@ -171,8 +162,8 @@ const ShortcutRow = GObject.registerClass(
       return Gdk.EVENT_STOP;
     }
 
-    // A combination is valid unless it is a bare letter/digit/script character
-    // (or a forbidden navigation key) with no modifier beyond Shift.
+    // Invalid if it is a bare letter/digit/script character (or a forbidden
+    // navigation key) with no modifier beyond Shift.
     _isBindingValid({ mask, keycode, keyval }) {
       if ((mask === 0 || mask === Gdk.ModifierType.SHIFT_MASK) && keycode !== 0) {
         if (
@@ -314,9 +305,6 @@ export default class WaylandPastePrefs extends ExtensionPreferences {
     );
     group.add(defaultAccelRow);
 
-    // Per-application paste shortcuts: one "WM_CLASS|accelerator" per line.
-    // A free-form text area mirrors how the underlying strv is stored and keeps
-    // the editor simple; lines are trimmed and empties dropped on save.
     const perAppGroup = new Adw.PreferencesGroup({
       title: "Per-application paste shortcuts",
       description:
@@ -338,7 +326,6 @@ export default class WaylandPastePrefs extends ExtensionPreferences {
     const buffer = textView.get_buffer();
     buffer.set_text(settings.get_strv("paste-keybindings").join("\n"), -1);
 
-    // Save on every edit; split into lines, trim, drop empties.
     buffer.connect("changed", () => {
       const [start, end] = [buffer.get_start_iter(), buffer.get_end_iter()];
       const text = buffer.get_text(start, end, false);
