@@ -16,6 +16,7 @@ indicator.
 - [Compatibility](#compatibility)
 - [Installation](#installation)
 - [Development](#development)
+- [Tests](#tests)
 - [How it works](#how-it-works)
 - [Limitations](#limitations)
 - [License](#license)
@@ -108,6 +109,24 @@ glib-compile-schemas schemas/
 `node --check` validates ESM syntax without resolving `gi://` imports. The
 upstream GNOME sources are checked out locally for API verification; see
 `CLAUDE.md`.
+
+## Tests
+
+`HistoryStore` has unit tests that run under `gjs` (the GNOME JavaScript
+interpreter), which resolves the `gi://` imports the modules use:
+
+```sh
+./tests/run.sh
+```
+
+The runner executes every `tests/*.test.js` file and fails the run if any of
+them exits non-zero. The tests cover the deduplication, eviction-when-full, and
+load-time deduplication (`_parse`) logic — including the `load()`/polling race
+that could persist a duplicate entry. They exercise only the text and JSON-parse
+paths, which touch no disk, so they leave no files behind.
+
+Why `gjs` and not a Node test framework (vitest/jest): see
+[docs/ADR/0009](docs/ADR/0009-test-with-gjs.md).
 
 ## How it works
 

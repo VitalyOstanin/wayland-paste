@@ -15,3 +15,4 @@ extension, using a lightweight ADR format (Context / Decision / Consequences).
 | [0006](0006-support-gnome-45-to-50.md)              | Declare and verify support for GNOME 45-50                  | Accepted |
 | [0007](0007-resource-cleanup-on-disable.md)         | Restore all touched state on disable                        | Accepted |
 | [0008](0008-reuse-shortcut-picker.md)               | Reuse the mute-all-mics shortcut picker for the menu hotkey | Accepted |
+| [0009](0009-test-with-gjs.md)                       | Run unit tests under gjs, without a node test framework     | Accepted |
