@@ -9,12 +9,6 @@ Deferred tasks, not critical to functionality.
 
 ## Performance
 
-- **Incremental history menu update.** Currently `ClipboardIndicator._rebuild`
-  calls `removeAll()` and recreates every Clutter actor in the list; `refresh()`
-  while the menu is open is now debounced (a burst of changes coalesces into one
-  rebuild), but the cost of a single rebuild with `history-size` up to 500
-  remains. Switch to a diff update (add/remove only the changed items) instead of
-  a full rebuild. File: `lib/indicator.js`.
 - **Pre-built image thumbnails.** `lib/indicator.js` builds an `St.Icon` from a
   `Gio.FileIcon` pointing at the full-size image file. Loading is asynchronous on
   a thread pool (mutter `st_texture_cache` → `load_pixbuf_thread`), so the main
