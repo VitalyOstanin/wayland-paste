@@ -5,10 +5,11 @@
   margin: 6px 8px;
 }
 
-/* Cap the height of the history list so a long history scrolls instead of
-   growing the menu past the screen. */
+/* The history list height is capped at runtime from the menu-max-rows setting
+   (see lib/indicator.js _applyMenuMaxHeight): an inline max-height of
+   rows x measured-row-height. With 0 rows no inline cap is set and the list is
+   bounded by the work-area max-height the shell puts on the top menu actor. */
 .wayland-paste-scroll {
-  max-height: 24em;
 }
 
 /* Image entries show a small thumbnail next to a label. */

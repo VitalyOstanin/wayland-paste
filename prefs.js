@@ -379,6 +379,14 @@ export default class WaylandPastePrefs extends ExtensionPreferences {
         subtitle: "How often the clipboard is checked (Wayland has no change signal)",
       }),
     );
+
+    group.add(
+      this._spinRow(settings, "menu-max-rows", "Menu height (rows)", {
+        lower: 0,
+        upper: 50,
+        subtitle: "Rows shown before the history list scrolls (0 = fit to screen)",
+      }),
+    );
   }
 
   _switchRow(settings, key, title, { subtitle } = {}) {

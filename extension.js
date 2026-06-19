@@ -52,7 +52,7 @@ export default class WaylandPasteExtension extends Extension {
     );
     this._monitor.start();
 
-    this._indicator = new ClipboardIndicator(this._store, {
+    this._indicator = new ClipboardIndicator(this._store, this._settings, {
       onActivate: (entry) => this._onActivate(entry),
       onClear: () => this._onClear(),
       onOpen: () => this._onMenuOpen(),
@@ -262,6 +262,10 @@ export default class WaylandPasteExtension extends Extension {
         break;
       case "show-indicator":
         this._applyIndicatorVisibility();
+        break;
+      case "menu-max-rows":
+        // Re-apply on the next rebuild; an open menu re-measures on its next open.
+        this._indicator?.refresh();
         break;
       case KEYBINDING:
         this._rebindShortcut();

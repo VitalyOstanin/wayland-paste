@@ -4,20 +4,8 @@ Deferred tasks, not critical to functionality.
 
 ## Contents
 
-- [Features](#features)
 - [Performance](#performance)
 - [Verified findings, no action](#verified-findings-no-action)
-
-## Features
-
-- **Configurable menu height.** The history list is wrapped in an `St.ScrollView`
-  (`lib/indicator.js`, `this._listScroll`) and the scrollbar engages off the CSS
-  `max-height` that `PanelMenu` sets on the top menu actor (the work-area height).
-  Add a setting to cap the menu height explicitly, expressed either in pixels or
-  in number of text rows (rows × per-item height). Apply it as a `max-height`
-  style on `this._listScroll` so the list scrolls within that bound instead of
-  growing to the full screen height. Needs a gschema key, a prefs control, and a
-  `_onSettingChanged` branch to re-apply on change.
 
 ## Performance
 

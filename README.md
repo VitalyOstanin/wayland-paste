@@ -68,6 +68,7 @@ The options mirror Diodon's, with a few Wayland-specific additions.
 | Show panel indicator            | on / off        | on           | indicator plugin         |
 | Open history shortcut           | shortcut        | `<Super>v`   | (Diodon hotkey)          |
 | Poll interval (ms)              | 100-5000        | 500          | none (Wayland-specific)  |
+| Menu height (rows)              | 0-50            | 12           | none (0 = fit to screen) |
 
 Per-application paste shortcuts are one `WM_CLASS|accelerator` per line, for
 example `Alacritty|<Shift><Ctrl>v`. Find a window's `WM_CLASS` with Looking Glass

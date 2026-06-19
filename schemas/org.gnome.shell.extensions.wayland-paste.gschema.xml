@@ -144,5 +144,17 @@
       </description>
     </key>
 
+    <key name="menu-max-rows" type="i">
+      <default>12</default>
+      <range min="0" max="50"/>
+      <summary>Maximum visible rows in the history menu</summary>
+      <description>
+        Cap the history list to this many rows; beyond it the list scrolls instead
+        of growing taller. The pixel cap is computed as rows times the measured
+        height of one row, so it tracks the shell theme. 0 disables the explicit
+        cap and falls back to the work-area height set by the shell.
+      </description>
+    </key>
+
   </schema>
 </schemalist>
