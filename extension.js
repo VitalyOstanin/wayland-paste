@@ -62,6 +62,9 @@ export default class WaylandPasteExtension extends Extension {
     Main.panel.addToStatusArea(this.uuid, this._indicator);
     this._applyIndicatorVisibility();
 
+    this._store.onThumbReady = (entry) =>
+      this._indicator?.updateThumbnail(entry);
+
     this._bindShortcut();
 
     // connectObject owned by `this`; disable() drops it with disconnectObject(this).
@@ -95,6 +98,7 @@ export default class WaylandPasteExtension extends Extension {
     // Persist before tearing down, if enabled.
     if (this._store && this._settings?.get_boolean("keep-clipboard-content"))
       this._store.save();
+    if (this._store) this._store.onThumbReady = null;
     this._store = null;
 
     if (this._paster) {

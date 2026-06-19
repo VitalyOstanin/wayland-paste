@@ -4,17 +4,7 @@ Deferred tasks, not critical to functionality.
 
 ## Contents
 
-- [Performance](#performance)
 - [Verified findings, no action](#verified-findings-no-action)
-
-## Performance
-
-- **Pre-built image thumbnails.** `lib/indicator.js` builds an `St.Icon` from a
-  `Gio.FileIcon` pointing at the full-size image file. Loading is asynchronous on
-  a thread pool (mutter `st_texture_cache` → `load_pixbuf_thread`), so the main
-  loop is not blocked — this is not a stall, just extra worker work: a full-size
-  file is decoded for a 48px icon. Build and cache a downscaled thumbnail when an
-  image is added and load the icon from it.
 
 ## Verified findings, no action
 
