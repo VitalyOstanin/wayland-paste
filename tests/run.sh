@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# Запуск юнит-тестов под gjs. Каждый *.test.js в этом каталоге исполняется как
-# ESM-модуль; ненулевой код возврата любого файла делает весь прогон упавшим.
+# Run the unit tests under gjs. Each *.test.js in this directory runs as an ESM
+# module; a non-zero exit from any file makes the whole run fail.
 
 set -euo pipefail
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if ! command -v gjs >/dev/null 2>&1; then
-  echo "gjs не найден в PATH; установите gjs для запуска тестов" >&2
+  echo "gjs not found in PATH; install gjs to run the tests" >&2
   exit 127
 fi
 

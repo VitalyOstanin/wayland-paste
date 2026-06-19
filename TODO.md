@@ -1,37 +1,49 @@
 # TODO
 
-Отложенные задачи, не критичные для работоспособности.
+Deferred tasks, not critical to functionality.
 
-## Содержание
+## Contents
 
-- [Производительность](#производительность)
-- [Проверенные находки без действия](#проверенные-находки-без-действия)
+- [Features](#features)
+- [Performance](#performance)
+- [Verified findings, no action](#verified-findings-no-action)
 
-## Производительность
+## Features
 
-- **Инкрементальное обновление меню истории.** Сейчас `ClipboardIndicator._rebuild`
-  делает `removeAll()` и пересоздаёт все Clutter-актёры списка; `refresh()` при
-  открытом меню теперь дебаунсится (бурст изменений коалесцируется в одну
-  пересборку), но стоимость одной пересборки при `history-size` до 500 остаётся.
-  Сделать диффовое обновление (добавлять/удалять только изменившиеся элементы)
-  вместо полной пересборки. Файл: `lib/indicator.js`.
-- **Предзаготовка миниатюр изображений.** `lib/indicator.js` строит `St.Icon`
-  из `Gio.FileIcon` на полноразмерный файл изображения. Загрузка идёт асинхронно
-  на потоке пула (mutter `st_texture_cache` → `load_pixbuf_thread`), главный цикл
-  не блокируется, поэтому это не подвисание, а лишняя работа воркера: декодируется
-  полноразмерный файл ради иконки 48px. Готовить и кэшировать уменьшенную
-  миниатюру при добавлении изображения и грузить иконку из неё.
+- **Configurable menu height.** The history list is wrapped in an `St.ScrollView`
+  (`lib/indicator.js`, `this._listScroll`) and the scrollbar engages off the CSS
+  `max-height` that `PanelMenu` sets on the top menu actor (the work-area height).
+  Add a setting to cap the menu height explicitly, expressed either in pixels or
+  in number of text rows (rows × per-item height). Apply it as a `max-height`
+  style on `this._listScroll` so the list scrolls within that bound instead of
+  growing to the full screen height. Needs a gschema key, a prefs control, and a
+  `_onSettingChanged` branch to re-apply on change.
 
-## Проверенные находки без действия
+## Performance
 
-Находки project-check (2026-06-10), отклонённые после чтения исходников
-gnome-shell/mutter ветки `gnome-50`:
+- **Incremental history menu update.** Currently `ClipboardIndicator._rebuild`
+  calls `removeAll()` and recreates every Clutter actor in the list; `refresh()`
+  while the menu is open is now debounced (a burst of changes coalesces into one
+  rebuild), but the cost of a single rebuild with `history-size` up to 500
+  remains. Switch to a diff update (add/remove only the changed items) instead of
+  a full rebuild. File: `lib/indicator.js`.
+- **Pre-built image thumbnails.** `lib/indicator.js` builds an `St.Icon` from a
+  `Gio.FileIcon` pointing at the full-size image file. Loading is asynchronous on
+  a thread pool (mutter `st_texture_cache` → `load_pixbuf_thread`), so the main
+  loop is not blocked — this is not a stall, just extra worker work: a full-size
+  file is decoded for a 48px icon. Build and cache a downscaled thumbnail when an
+  image is added and load the icon from it.
 
-- **Синхронный `St.Clipboard.get_mimetypes()` на каждом тике поллинга** не
-  является блокирующим round-trip: `st_clipboard_get_mimetypes` →
+## Verified findings, no action
+
+project-check findings (2026-06-10), dismissed after reading the gnome-shell /
+mutter sources on the `gnome-50` branch:
+
+- **Synchronous `St.Clipboard.get_mimetypes()` on every poll tick** is not a
+  blocking round-trip: `st_clipboard_get_mimetypes` →
   `meta_selection_get_mimetypes` → `meta_selection_source_wayland_get_mimetypes`
-  возвращает `g_list_copy_deep` уже закэшированного в памяти списка mimetype-строк.
-  Это дешёвая локальная копия нескольких строк, переписывать на async-цепочку
-  `get_content` не требуется (добавило бы больше main-loop колбэков).
-- **Загрузка миниатюр на потоке отрисовки** — см. выше: загрузка `St.Icon`/
-  `Gio.FileIcon` идёт на потоке пула, не на главном цикле; jank нет.
+  returns a `g_list_copy_deep` of the already in-memory list of mimetype strings.
+  This is a cheap local copy of a few strings; rewriting it as an async
+  `get_content` chain is not needed (it would add more main-loop callbacks).
+- **Thumbnail loading on the render thread** — see above: loading the `St.Icon` /
+  `Gio.FileIcon` happens on a thread pool, not on the main loop; there is no jank.
