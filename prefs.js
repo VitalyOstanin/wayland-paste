@@ -7,7 +7,6 @@ import GObject from "gi://GObject";
 import Gtk from "gi://Gtk";
 import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
 
-// Minimum visible height (px) of the per-app paste-keybindings editor.
 const PER_APP_EDITOR_MIN_HEIGHT = 140;
 
 // Lower bound on the poll interval (ms). Must match the gschema range and the

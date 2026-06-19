@@ -264,7 +264,7 @@ export default class WaylandPasteExtension extends Extension {
         this._applyIndicatorVisibility();
         break;
       case "menu-max-rows":
-        // Re-apply on the next rebuild; an open menu re-measures on its next open.
+        // An open menu re-measures on its next open.
         this._indicator?.refresh();
         break;
       case KEYBINDING:
