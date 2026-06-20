@@ -57,7 +57,7 @@ The options mirror Diodon's, with a few Wayland-specific additions.
 | ------------------------------- | --------------- | ------------ | ------------------------ |
 | History size                    | 1-500           | 25           | recent-items-size        |
 | Track clipboard                 | on / off        | on           | use-clipboard            |
-| Track primary selection         | on / off        | on           | use-primary              |
+| Track primary selection         | on / off        | off          | use-primary              |
 | Synchronize clipboard & primary | on / off        | off          | synchronize-clipboards   |
 | Persist history across sessions | on / off        | on           | keep-clipboard-content   |
 | Store images                    | on / off        | off          | add-images               |

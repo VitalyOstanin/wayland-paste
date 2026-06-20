@@ -24,11 +24,13 @@
     </key>
 
     <key name="use-primary" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Track the PRIMARY selection</summary>
       <description>
         Watch the primary selection (text highlighted with the mouse) and record
-        its content. Mirrors Diodon's use-primary.
+        its content. Mirrors Diodon's use-primary. Off by default: tracking the
+        primary selection records every intermediate highlight while dragging,
+        which floods the history.
       </description>
     </key>
 
