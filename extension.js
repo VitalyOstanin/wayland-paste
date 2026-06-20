@@ -289,7 +289,10 @@ export default class WaylandPasteExtension extends Extension {
       KEYBINDING,
       this._settings,
       Meta.KeyBindingFlags.NONE,
-      Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
+      // POPUP so the same shortcut closes the menu while it is open: an open
+      // PopupMenu pushes the action mode to POPUP, and a binding not allowed in
+      // that mode is filtered out (mirrors the shell's own toggle bindings).
+      Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW | Shell.ActionMode.POPUP,
       () => this._indicator?.menu.toggle(),
     );
   }
