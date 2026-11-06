@@ -5,7 +5,7 @@ Guidance for AI agents and contributors working on this extension.
 ## Table of Contents
 
 - [Project overview](#project-overview)
-- [Hard constraint: GNOME 45-50](#hard-constraint-gnome-45-50)
+- [Hard constraint: GNOME 45-51](#hard-constraint-gnome-45-51)
 - [No Remote Desktop dialog: the core mechanism](#no-remote-desktop-dialog-the-core-mechanism)
 - [API surface used](#api-surface-used)
 - [Files](#files)
@@ -22,9 +22,9 @@ focus/paste timing, polling, cleanup, the reused shortcut picker) is recorded in
 [docs/ADR](docs/ADR). Read the ADRs before changing how pasting or change
 detection works.
 
-## Hard constraint: GNOME 45-50
+## Hard constraint: GNOME 45-51
 
-`metadata.json` declares `shell-version` 45 through 50. Every change MUST keep
+`metadata.json` declares `shell-version` 45 through 51. Every change MUST keep
 the extension working across all of them. GNOME's API is not stable across major
 versions, so any use of a Meta/Shell/Clutter/St symbol must be verified against
 each declared version. Do not assume a symbol exists just because it works on the
@@ -44,18 +44,18 @@ portal path and therefore triggers the dialog. See
 
 | Symbol                                                        | Source      | Tier  | Notes                                            |
 | ------------------------------------------------------------- | ----------- | ----- | ------------------------------------------------ |
-| `Extension`, `getSettings()`                                  | gnome-shell | 45-50 | `js/extensions/extension.js`                     |
-| `Main.panel.addToStatusArea`, `Main.wm.addKeybinding/removeKeybinding` | gnome-shell | 45-50 | panel + keybinding registration         |
-| `PanelMenu.Button`, `PopupMenu.*`                             | gnome-shell | 45-50 | menu, sections, items, separator                 |
-| `St.Clipboard` `get_text` / `set_text` / `get_content` / `set_content` / `get_mimetypes` | st (gnome-shell) | 45-50 | verified in `src/st/st-clipboard.h` |
-| `St.ClipboardType.CLIPBOARD` / `PRIMARY`                      | st          | 45-50 | selection kinds                                  |
-| `Clutter` virtual device: `get_default_backend().get_default_seat().create_virtual_device(InputDeviceType.KEYBOARD_DEVICE)` | mutter | 45-50 | used by the on-screen keyboard |
-| `virtualDevice.notify_key(time, evcode, Clutter.KeyState.PRESSED/RELEASED)` | mutter | 45-50 | injection by evdev keycode (layout-independent); time = `GLib.get_monotonic_time()` |
-| `global.display.focus_window`, `window.get_wm_class()` / `get_wm_class_instance()` | mutter | 45-50 | paste target + per-app match |
-| `Meta.KeyBindingFlags`, `Shell.ActionMode`                    | mutter/shell| 45-50 | keybinding flags/modes                           |
-| `Gtk.ShortcutLabel`, `Gtk.EventControllerKey`, `Gtk.accelerator_*` | gtk4 (prefs) | 45-50 | shortcut picker in prefs only            |
+| `Extension`, `getSettings()`                                  | gnome-shell | 45-51 | `js/extensions/extension.js`                     |
+| `Main.panel.addToStatusArea`, `Main.wm.addKeybinding/removeKeybinding` | gnome-shell | 45-51 | panel + keybinding registration         |
+| `PanelMenu.Button`, `PopupMenu.*`                             | gnome-shell | 45-51 | menu, sections, items, separator                 |
+| `St.Clipboard` `get_text` / `set_text` / `get_content` / `set_content` / `get_mimetypes` | st (gnome-shell) | 45-51 | verified in `src/st/st-clipboard.h` |
+| `St.ClipboardType.CLIPBOARD` / `PRIMARY`                      | st          | 45-51 | selection kinds                                  |
+| `Clutter` virtual device: `get_default_backend().get_default_seat().create_virtual_device(InputDeviceType.KEYBOARD_DEVICE)` | mutter | 45-51 | used by the on-screen keyboard |
+| `virtualDevice.notify_key(time, evcode, Clutter.KeyState.PRESSED/RELEASED)` | mutter | 45-51 | injection by evdev keycode (layout-independent); time = `GLib.get_monotonic_time()` |
+| `global.display.focus_window`, `window.get_wm_class()` / `get_wm_class_instance()` | mutter | 45-51 | paste target + per-app match |
+| `Meta.KeyBindingFlags`, `Shell.ActionMode`                    | mutter/shell| 45-51 | keybinding flags/modes                           |
+| `Gtk.ShortcutLabel`, `Gtk.EventControllerKey`, `Gtk.accelerator_*` | gtk4 (prefs) | 45-51 | shortcut picker in prefs only            |
 
-The injection and clipboard symbols were verified on every branch 45-50 via the
+The injection and clipboard symbols were verified on every branch 45-51 via the
 local checkouts (the on-screen keyboard uses `create_virtual_device` /
 `notify_keyval` on all of them — we use `notify_key` from the same device for
 layout-independent paste; `st-clipboard.h` exposes the five clipboard methods on

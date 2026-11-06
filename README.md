@@ -76,7 +76,7 @@ example `Alacritty|<Shift><Ctrl>v`. Find a window's `WM_CLASS` with Looking Glas
 
 ## Compatibility
 
-GNOME Shell 45, 46, 47, 48, 49, 50. Designed for Wayland sessions; the paste
+GNOME Shell 45, 46, 47, 48, 49, 50, 51. Designed for Wayland sessions; the paste
 mechanism also works on X11 sessions of these versions.
 
 ## Installation

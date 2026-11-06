@@ -1,6 +1,6 @@
 # 0006 - Declare and verify support for GNOME 45-50
 
-Status: Accepted
+Status: Superseded by [0010](0010-support-gnome-45-to-51.md)
 
 ## Context
 
