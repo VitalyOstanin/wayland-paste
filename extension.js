@@ -18,6 +18,8 @@ import { ClipboardIndicator } from "./lib/indicator.js";
 // ACTIVATE_SETTLE_MS: after returning focus, wait for it to land before typing.
 const PASTE_DELAY_MS = 120;
 const ACTIVATE_SETTLE_MS = 80;
+// Coalesces a burst of clipboard changes into one history.json write.
+const SAVE_DELAY_S = 5;
 
 const KEYBINDING = "toggle-menu";
 
@@ -27,6 +29,7 @@ export default class WaylandPasteExtension extends Extension {
     this._clipboard = St.Clipboard.get_default();
     this._pasteDelayId = 0;
     this._injectDelayId = 0;
+    this._saveDelayId = 0;
     this._pendingTarget = undefined; // set on activate, consumed on menu close
     this._target = null;
 
@@ -37,19 +40,26 @@ export default class WaylandPasteExtension extends Extension {
     this._store = new HistoryStore(dataDir);
     // load() is async; refresh the menu once it resolves. The .catch guards a
     // throw from refresh() so it does not escape as an unhandled rejection.
-    if (this._settings.get_boolean("keep-clipboard-content"))
+    // Until the async load resolves, _entries holds only the fresh entries;
+    // saving then would overwrite history.json with a truncated history.
+    this._historyLoaded = !this._settings.get_boolean("keep-clipboard-content");
+    if (!this._historyLoaded)
       this._store
         .load(this._settings.get_int("history-size"))
-        .then(() => this._indicator?.refresh())
+        .then(() => {
+          this._historyLoaded = true;
+          this._indicator?.refresh();
+        })
         .catch((err) =>
           logError(err, "[wayland-paste] failed to refresh after history load"),
         );
 
     this._paster = new Paster();
 
-    this._monitor = new ClipboardMonitor(this._settings, this._store, () =>
-      this._indicator?.refresh(),
-    );
+    this._monitor = new ClipboardMonitor(this._settings, this._store, () => {
+      this._indicator?.refresh();
+      this._scheduleSave();
+    });
     this._monitor.start();
 
     this._indicator = new ClipboardIndicator(this._store, this._settings, {
@@ -62,8 +72,10 @@ export default class WaylandPasteExtension extends Extension {
     Main.panel.addToStatusArea(this.uuid, this._indicator);
     this._applyIndicatorVisibility();
 
-    this._store.onThumbReady = (entry) =>
+    this._store.onThumbReady = (entry) => {
       this._indicator?.updateThumbnail(entry);
+      this._scheduleSave();
+    };
 
     this._bindShortcut();
 
@@ -73,10 +85,16 @@ export default class WaylandPasteExtension extends Extension {
       (_s, key) => this._onSettingChanged(key),
       this,
     );
+
+    // disable() is not guaranteed to run on logout, but the shell emits
+    // "shutdown" on every regular exit. The main loop is gone by then, so the
+    // write must be synchronous.
+    global.connectObject("shutdown", () => this._saveNow(), this);
   }
 
   disable() {
     this._settings?.disconnectObject(this);
+    global.disconnectObject(this);
 
     this._unbindShortcut();
 
@@ -95,9 +113,7 @@ export default class WaylandPasteExtension extends Extension {
       this._monitor = null;
     }
 
-    // Persist before tearing down, if enabled.
-    if (this._store && this._settings?.get_boolean("keep-clipboard-content"))
-      this._store.save();
+    this._saveNow();
     if (this._store) this._store.onThumbReady = null;
     this._store = null;
 
@@ -131,6 +147,7 @@ export default class WaylandPasteExtension extends Extension {
         this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry.text);
         this._monitor?.markSeen(St.ClipboardType.CLIPBOARD, entry.text);
         this._store.addText(entry.text, this._settings.get_int("history-size"));
+        this._scheduleSave();
       } else if (entry.type === "image") {
         this._setImageClipboard(entry);
       }
@@ -244,9 +261,36 @@ export default class WaylandPasteExtension extends Extension {
         entry.mimetype,
         this._settings.get_int("history-size"),
       );
+      this._scheduleSave();
     } catch (err) {
       logError(err, "[wayland-paste] failed to set image clipboard for paste");
     }
+  }
+
+  _scheduleSave() {
+    if (!this._settings.get_boolean("keep-clipboard-content")) return;
+    if (this._saveDelayId) GLib.source_remove(this._saveDelayId);
+    this._saveDelayId = GLib.timeout_add_seconds(
+      GLib.PRIORITY_DEFAULT,
+      SAVE_DELAY_S,
+      () => {
+        this._saveDelayId = 0;
+        if (this._historyLoaded) this._store.saveAsync();
+        return GLib.SOURCE_REMOVE;
+      },
+    );
+  }
+
+  _saveNow() {
+    if (this._saveDelayId) {
+      GLib.source_remove(this._saveDelayId);
+      this._saveDelayId = 0;
+    }
+    if (
+      this._historyLoaded &&
+      this._settings.get_boolean("keep-clipboard-content")
+    )
+      this._store.save();
   }
 
   _onClear() {
