@@ -78,8 +78,9 @@
       <summary>Maximum text entry length</summary>
       <description>
         Clipboard text longer than this many characters is not added to the
-        history, so an accidental huge selection does not bloat GNOME Shell
-        memory and history.json. The clipboard itself is left untouched.
+        history (nor synchronized between clipboard and primary), so an
+        accidental huge selection does not bloat GNOME Shell memory and
+        history.json. The clipboard itself is left untouched.
       </description>
     </key>
 

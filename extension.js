@@ -37,16 +37,18 @@ export default class WaylandPasteExtension extends Extension {
       GLib.get_user_data_dir(),
       "wayland-paste",
     ]);
-    this._store = new HistoryStore(dataDir);
-    // load() is async; refresh the menu once it resolves. The .catch guards a
-    // throw from refresh() so it does not escape as an unhandled rejection.
+    const store = new HistoryStore(dataDir);
+    this._store = store;
     // Until the async load resolves, _entries holds only the fresh entries;
-    // saving then would overwrite history.json with a truncated history.
+    // saving then would overwrite history.json with a truncated history. A load
+    // from an earlier enable() resolves against its own store and is ignored.
+    // The .catch guards a throw from refresh() from escaping as a rejection.
     this._historyLoaded = !this._settings.get_boolean("keep-clipboard-content");
     if (!this._historyLoaded)
-      this._store
+      store
         .load(this._settings.get_int("history-size"))
         .then(() => {
+          if (store !== this._store) return;
           this._historyLoaded = true;
           this._indicator?.refresh();
         })
@@ -276,6 +278,7 @@ export default class WaylandPasteExtension extends Extension {
       () => {
         this._saveDelayId = 0;
         if (this._historyLoaded) this._store.saveAsync();
+        else this._scheduleSave();
         return GLib.SOURCE_REMOVE;
       },
     );
