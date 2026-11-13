@@ -267,6 +267,15 @@ export default class WaylandPastePrefs extends ExtensionPreferences {
       }),
     );
 
+    group.add(
+      this._spinRow(settings, "max-text-length", "Maximum text length", {
+        lower: 1000,
+        upper: 10000000,
+        step: 1000,
+        subtitle: "Longer clipboard text is not recorded (characters)",
+      }),
+    );
+
     const filterRow = new Adw.EntryRow({ title: "Ignore pattern (regex)" });
     settings.bind(
       "filter-pattern",

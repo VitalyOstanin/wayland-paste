@@ -62,6 +62,7 @@ The options mirror Diodon's, with a few Wayland-specific additions.
 | Persist history across sessions | on / off        | on           | keep-clipboard-content   |
 | Store images                    | on / off        | off          | add-images               |
 | Ignore pattern (regex)          | string          | `^\s+$`      | filter-pattern           |
+| Maximum text length             | 1000-10000000   | 100000       | none                     |
 | Paste on selection              | on / off        | on           | instant-paste            |
 | Default paste shortcut          | accelerator     | `<Ctrl>v`    | (implicit)               |
 | Per-application paste shortcuts | list            | terminals    | app-paste-keybindings    |
