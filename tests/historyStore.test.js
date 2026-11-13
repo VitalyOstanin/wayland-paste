@@ -2,7 +2,7 @@
 //
 // Unit tests for HistoryStore. Run: gjs -m tests/historyStore.test.js
 // (or ./tests/run.sh). Cover deduplication, eviction when full and dedup on
-// load (_parse), including the load()/polling race.
+// load (_parse), including the load()/capture race.
 //
 // Only the text path and JSON parsing are tested: they do not touch the disk
 // (file I/O in HistoryStore happens only in save/load and when writing images),
@@ -60,7 +60,7 @@ const store = () => new HistoryStore(`/tmp/wp-test-store-${n++}`);
 }
 
 {
-  // load()/polling race: the monitor recorded a fresh "test" during the async
+  // load()/capture race: the monitor recorded a fresh "test" during the async
   // load, then _parse parses a file where "test" is also stored.
   const s = store();
   s.addText("test", 50); // fresh entry from the load window: [test]

@@ -147,17 +147,6 @@
       </description>
     </key>
 
-    <key name="poll-interval-ms" type="i">
-      <default>500</default>
-      <range min="100" max="5000"/>
-      <summary>Clipboard poll interval in milliseconds</summary>
-      <description>
-        Wayland does not notify extensions of clipboard changes, so the clipboard
-        is polled on this interval. Lower values capture changes sooner at a small
-        CPU cost. This setting has no equivalent in Diodon, which runs on X11.
-      </description>
-    </key>
-
     <key name="menu-max-rows" type="i">
       <default>12</default>
       <range min="0" max="50"/>

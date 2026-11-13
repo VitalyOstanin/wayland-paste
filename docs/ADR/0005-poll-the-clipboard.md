@@ -1,6 +1,6 @@
 # 0005 - Poll the clipboard (no Wayland change signal)
 
-Status: Accepted
+Status: Superseded by [0011](0011-detect-changes-via-owner-changed.md)
 
 ## Context
 

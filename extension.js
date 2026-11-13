@@ -252,7 +252,7 @@ export default class WaylandPasteExtension extends Extension {
         entry.mimetype,
         GLib.Bytes.new(contents),
       );
-      // Mark our own write as seen so the next poll does not re-record it.
+      // Mark our own write as seen so the next read does not re-record it.
       this._monitor?.markSeenImage(
         St.ClipboardType.CLIPBOARD,
         entry.mimetype,
@@ -305,9 +305,6 @@ export default class WaylandPasteExtension extends Extension {
 
   _onSettingChanged(key) {
     switch (key) {
-      case "poll-interval-ms":
-        this._monitor?.restart();
-        break;
       case "filter-pattern":
         this._monitor?.refreshFilter();
         break;

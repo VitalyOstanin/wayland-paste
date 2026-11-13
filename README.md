@@ -68,7 +68,6 @@ The options mirror Diodon's, with a few Wayland-specific additions.
 | Per-application paste shortcuts | list            | terminals    | app-paste-keybindings    |
 | Show panel indicator            | on / off        | on           | indicator plugin         |
 | Open history shortcut           | shortcut        | `<Super>v`   | (Diodon hotkey)          |
-| Poll interval (ms)              | 100-5000        | 500          | none (Wayland-specific)  |
 | Menu height (rows)              | 0-50            | 12           | none (0 = fit to screen) |
 
 Per-application paste shortcuts are one `WM_CLASS|accelerator` per line, for
@@ -123,7 +122,7 @@ interpreter), which resolves the `gi://` imports the modules use:
 
 The runner executes every `tests/*.test.js` file and fails the run if any of
 them exits non-zero. The tests cover the deduplication, eviction-when-full, and
-load-time deduplication (`_parse`) logic — including the `load()`/polling race
+load-time deduplication (`_parse`) logic — including the `load()`/capture race
 that could persist a duplicate entry. They exercise only the text and JSON-parse
 paths, which touch no disk, so they leave no files behind.
 
@@ -132,8 +131,9 @@ Why `gjs` and not a Node test framework (vitest/jest): see
 
 ## How it works
 
-- `lib/clipboardMonitor.js` polls `St.Clipboard` because Wayland has no
-  clipboard-change signal, and pushes new content into the history.
+- `lib/clipboardMonitor.js` reads `St.Clipboard` whenever Mutter reports a new
+  clipboard owner (`owner-changed` on `global.display.get_selection()`), and
+  pushes new content into the history.
 - `lib/historyStore.js` holds the entries and persists them to
   `~/.local/share/wayland-paste/` (images as files, the rest as `history.json`).
 - `lib/indicator.js` is the panel button and the searchable, mouse-driven menu.
@@ -148,8 +148,6 @@ The rationale for each choice is in [docs/ADR](docs/ADR).
 ## Limitations
 
 - GNOME Shell only (the in-process injection is GNOME-specific).
-- Clipboard changes are detected by polling, so there is a small capture latency
-  (the poll interval).
 - Per-application paste shortcuts match by `WM_CLASS`, not by executable path as
   Diodon does.
 - Rich content other than plain text and bitmap images is not stored.

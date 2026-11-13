@@ -18,7 +18,7 @@ Guidance for AI agents and contributors working on this extension.
 `wayland-paste` is a clipboard history manager for GNOME Shell on Wayland that
 reproduces [Diodon](https://github.com/diodon-dev/diodon)'s workflow. The
 rationale for each decision (mirroring Diodon, in-process input injection, the
-focus/paste timing, polling, cleanup, the reused shortcut picker) is recorded in
+focus/paste timing, change detection, cleanup, the reused shortcut picker) is recorded in
 [docs/ADR](docs/ADR). Read the ADRs before changing how pasting or change
 detection works.
 
@@ -49,7 +49,8 @@ portal path and therefore triggers the dialog. See
 | `PanelMenu.Button`, `PopupMenu.*`                             | gnome-shell | 45-51 | menu, sections, items, separator                 |
 | `St.Clipboard` `get_text` / `set_text` / `get_content` / `set_content` / `get_mimetypes` | st (gnome-shell) | 45-51 | verified in `src/st/st-clipboard.h` |
 | `St.ClipboardType.CLIPBOARD` / `PRIMARY`                      | st          | 45-51 | selection kinds                                  |
-| `Clutter` virtual device: `get_default_backend().get_default_seat().create_virtual_device(InputDeviceType.KEYBOARD_DEVICE)` | mutter | 45-51 | used by the on-screen keyboard |
+| `global.display.get_selection()`, `Meta.Selection` `owner-changed(type, source)`, `Meta.SelectionType.SELECTION_CLIPBOARD` / `SELECTION_PRIMARY` | mutter | 45-51 | change detection; `src/core/meta-selection.c`, `src/meta/meta-selection-source.h` |
+| `Clutter` virtual device: `get_default_backend().get_default_seat().create_virtual_device(InputDeviceType.KEYBOARD_DEVICE)` | mutter | 45-51 | used by the on-screen keyboard; `get_default_backend()` is gone in 51, where the backend comes from `global.stage.context.get_backend()` (`Paster._backend()`) |
 | `virtualDevice.notify_key(time, evcode, Clutter.KeyState.PRESSED/RELEASED)` | mutter | 45-51 | injection by evdev keycode (layout-independent); time = `GLib.get_monotonic_time()` |
 | `global.display.focus_window`, `window.get_wm_class()` / `get_wm_class_instance()` | mutter | 45-51 | paste target + per-app match |
 | `Meta.KeyBindingFlags`, `Shell.ActionMode`                    | mutter/shell| 45-51 | keybinding flags/modes                           |
@@ -67,7 +68,7 @@ layout-independent paste; `st-clipboard.h` exposes the five clipboard methods on
 - `prefs.js` — Adwaita preferences; `ShortcutRow` capture picker (from
   mute-all-mics) for the menu hotkey.
 - `lib/historyStore.js` — history entries and on-disk persistence (no Shell deps).
-- `lib/clipboardMonitor.js` — clipboard polling, filter, synchronization.
+- `lib/clipboardMonitor.js` — clipboard change detection, filter, synchronization.
 - `lib/paster.js` — Clutter virtual device, accelerator parsing, per-app match.
 - `lib/indicator.js` — panel button + searchable menu (mouse-driven, type-to-filter).
 - `schemas/` — GSettings schema.

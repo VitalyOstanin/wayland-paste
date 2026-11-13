@@ -9,10 +9,6 @@ import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/
 
 const PER_APP_EDITOR_MIN_HEIGHT = 140;
 
-// Lower bound on the poll interval (ms). Must match the gschema range and the
-// MIN_POLL_INTERVAL_MS floor in lib/clipboardMonitor.js.
-const MIN_POLL_INTERVAL_MS = 100;
-
 // An Adw.ActionRow that captures a single keyboard shortcut interactively. The
 // validation rules originate from the night-theme-switcher extension:
 // https://gitlab.com/rmnvgr/nightthemeswitcher-gnome-shell-extension
@@ -376,15 +372,6 @@ export default class WaylandPastePrefs extends ExtensionPreferences {
       new ShortcutRow(settings, "toggle-menu", {
         title: "Open history shortcut",
         subtitle: "Click to set, then press a key combination",
-      }),
-    );
-
-    group.add(
-      this._spinRow(settings, "poll-interval-ms", "Poll interval (ms)", {
-        lower: MIN_POLL_INTERVAL_MS,
-        upper: 5000,
-        step: 50,
-        subtitle: "How often the clipboard is checked (Wayland has no change signal)",
       }),
     );
 
